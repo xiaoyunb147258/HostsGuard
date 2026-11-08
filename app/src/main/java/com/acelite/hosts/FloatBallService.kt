@@ -108,7 +108,7 @@ class FloatBallService : Service() {
                 setColor(0xFFC97995.toInt())
                 setStroke(dp(2), 0x40FFFFFF)
             }
-            elevation = dp(8)
+            elevation = dp(8).toFloat()
         }
         val ballSize = dp(BALL_DP)
         container.addView(b, FrameLayout.LayoutParams(ballSize, ballSize))
@@ -128,7 +128,7 @@ class FloatBallService : Service() {
                 setColor(0xF2FFF8FA.toInt())
                 setStroke(dp(1), 0xFFF0DFE5.toInt())
             }
-            elevation = dp(10)
+            elevation = dp(10).toFloat()
             setPadding(dp(12), dp(8), dp(12), dp(8))
         }
 
