@@ -1,0 +1,281 @@
+/* ═══════════════════════════════════════════════════
+   Hosts Guard · 特效层
+   所有特效都可通过 .fx-off / .fx-low 控制
+   ═══════════════════════════════════════════════════ */
+
+/* ─────────── 总开关 ─────────── */
+.fx-off .fx-snow,
+.fx-off .fx-scan,
+.fx-off .fx-glow { display:none !important; }
+
+/* 低性能模式：只留雪花，关掉发光 */
+.fx-low .fx-glow { display:none !important; }
+.fx-low .fx-snow i { animation-duration:inherit; }
+
+/* ═══════════════════════════════════════════
+   1. 飘雪
+   ═══════════════════════════════════════════ */
+.fx-snow{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  overflow:hidden;
+  z-index:0;              /* 最底层，压在背景上、内容下 */
+}
+
+.fx-snow i{
+  position:absolute;
+  top:-8vh;
+  border-radius:50%;
+  background:#fff;
+  opacity:0;
+  animation-name:fxFall;
+  animation-timing-function:linear;
+  animation-iteration-count:infinite;
+  box-shadow:0 0 4px rgba(255,255,255,.55);
+}
+
+/* 只给大的提升合成层，避免 46 个元素全占 GPU */
+.fx-snow i.l{ will-change:transform,opacity; }
+
+@keyframes fxFall{
+  0%{
+    transform:translate3d(0,0,0);
+    opacity:0;
+  }
+  8%{
+    opacity:var(--o, .55);
+  }
+  85%{
+    opacity:var(--o, .55);
+  }
+  100%{
+    transform:translate3d(var(--dx, 20px), 108vh, 0);
+    opacity:0;
+  }
+}
+
+/* 大小分级 —— 近的更大更亮更快 */
+.fx-snow i.s{ width:3px; height:3px; --o:.32; }
+.fx-snow i.m{ width:5px; height:5px; --o:.48; }
+.fx-snow i.l{ width:7px; height:7px; --o:.62; box-shadow:0 0 8px rgba(255,255,255,.7); }
+
+/* ═══════════════════════════════════════════
+   2. 卡片发光（触摸/悬停时边缘发柔光）
+   ═══════════════════════════════════════════ */
+.fx-glow .card,
+.fx-glow .channel{
+  position:relative;
+  transition:box-shadow .32s ease, transform .18s ease;
+}
+
+.fx-glow .card::after,
+.fx-glow .channel::after{
+  content:'';
+  position:absolute;
+  inset:-1px;
+  border-radius:inherit;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .32s ease;
+  background:radial-gradient(
+    120% 120% at 50% 0%,
+    rgba(201,121,149,.18) 0%,
+    rgba(201,121,149,.06) 35%,
+    transparent 70%
+  );
+  box-shadow:
+    0 0 0 1px rgba(201,121,149,.16),
+    0 10px 32px rgba(201,121,149,.14);
+}
+
+/* .capture 有 overflow:hidden 会裁掉外光，单独用内发光替代
+   放在 .card::after 之后，确保覆盖生效 */
+.fx-glow .card.capture::after{
+  inset:0;
+  box-shadow:none;
+  background:linear-gradient(
+    180deg,
+    rgba(201,121,149,.10) 0%,
+    transparent 32%
+  );
+}
+
+.fx-glow .card:hover::after,
+.fx-glow .card:active::after,
+.fx-glow .channel:hover::after,
+.fx-glow .channel:active::after{
+  opacity:1;
+}
+
+/* ═══════════════════════════════════════════
+   3. 开启状态：状态点呼吸光
+   ═══════════════════════════════════════════ */
+.fx-glow .dot.on{
+  animation:fxBreathe 2.6s ease-in-out infinite;
+}
+@keyframes fxBreathe{
+  0%,100%{
+    box-shadow:0 0 0 5px rgba(120,168,142,.17);
+  }
+  50%{
+    box-shadow:
+      0 0 0 5px rgba(120,168,142,.14),
+      0 0 14px rgba(120,168,142,.5);
+  }
+}
+
+/* 开关开启时，滑块有一圈微光 */
+.fx-glow .switch.on i{
+  box-shadow:
+    0 2px 6px rgba(152,106,120,.33),
+    0 0 10px rgba(255,255,255,.55);
+}
+.fx-glow .small-switch.on i{
+  box-shadow:
+    0 1px 4px rgba(152,106,120,.28),
+    0 0 8px rgba(255,255,255,.5);
+}
+
+/* ═══════════════════════════════════════════
+   4. 统计数字跳动
+   ═══════════════════════════════════════════ */
+.fx-glow .stat strong{
+  transition:color .2s ease;
+}
+.fx-glow .stat strong.bump{
+  animation:fxBump .42s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes fxBump{
+  0%   { transform:scale(1); }
+  35%  { transform:scale(1.22); }
+  100% { transform:scale(1); }
+}
+
+/* 数字变化时闪一下深粉 */
+.fx-glow .stat strong.bump{
+  color:#c97995;
+}
+
+/* ═══════════════════════════════════════════
+   5. 页面切换扫描光
+   ═══════════════════════════════════════════ */
+.fx-scan{
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+  height:2px;
+  background:linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(201,121,149,.55) 30%,
+    rgba(255,255,255,.9) 50%,
+    rgba(201,121,149,.55) 70%,
+    transparent 100%
+  );
+  filter:blur(.5px);
+  opacity:0;
+  pointer-events:none;
+  z-index:8;
+}
+
+.fx-scan.run{
+  animation:fxScan .55s cubic-bezier(.3,.7,.4,1);
+}
+@keyframes fxScan{
+  0%{
+    opacity:0;
+    transform:translateY(0) scaleX(.4);
+  }
+  20%{
+    opacity:1;
+  }
+  100%{
+    opacity:0;
+    transform:translateY(100vh) scaleX(1.05);
+  }
+}
+
+/* ═══════════════════════════════════════════
+   6. 点击涟漪（开关、按钮）
+   ═══════════════════════════════════════════ */
+.fx-glow .btn,
+.fx-glow .mini,
+.fx-glow .switch,
+.fx-glow .small-switch{
+  position:relative;
+  overflow:hidden;
+}
+
+.fx-ripple{
+  position:absolute;
+  border-radius:50%;
+  pointer-events:none;
+  background:radial-gradient(circle, rgba(255,255,255,.75) 0%, rgba(255,255,255,0) 70%);
+  transform:scale(0);
+  animation:fxRipple .55s ease-out forwards;
+  z-index:2;
+}
+@keyframes fxRipple{
+  to{
+    transform:scale(2.4);
+    opacity:0;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   7. 关于页频道卡：光带扫过
+   ═══════════════════════════════════════════ */
+.fx-glow .channel{
+  overflow:hidden;
+}
+.fx-glow .channel::before{
+  content:'';
+  position:absolute;
+  top:0;
+  left:-60%;
+  width:45%;
+  height:100%;
+  background:linear-gradient(
+    100deg,
+    transparent 0%,
+    rgba(255,255,255,.55) 50%,
+    transparent 100%
+  );
+  transform:skewX(-18deg);
+  opacity:0;
+  pointer-events:none;
+}
+.fx-glow .channel.sweep::before{
+  animation:fxSweep .85s cubic-bezier(.4,0,.2,1);
+}
+@keyframes fxSweep{
+  0%   { left:-60%; opacity:0; }
+  15%  { opacity:1; }
+  100% { left:130%; opacity:0; }
+}
+
+/* ═══════════════════════════════════════════
+   无障碍 / 降级
+   ═══════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce){
+  .fx-snow,
+  .fx-scan,
+  .fx-ripple{
+    display:none !important;
+  }
+  .fx-glow .card::after,
+  .fx-glow .channel::after{
+    transition:none;
+  }
+  .fx-glow .dot.on,
+  .fx-glow .stat strong.bump{
+    animation:none !important;
+  }
+}
+
+/* 极低端机：CPU 弱，直接关雪花 */
+@media (max-width: 360px){
+  .fx-snow i.l{ display:none; }
+}
