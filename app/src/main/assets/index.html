@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#fff8fa">
+<title>Hosts Guard</title>
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="fx.css">
+<script defer src="fx.js"></script>
+<script defer src="app.js"></script>
+<script defer src="alpine.min.js"></script>
+</head>
+<body>
+
+<div class="app" x-data x-cloak>
+  <div class="stage">
+
+    <!-- ═══════════ 主页 ═══════════ -->
+    <section class="page" x-show="$store.G.tab==='home'">
+
+      <header class="top">
+        <div class="eyebrow">HOSTS GUARD</div>
+        <h1 class="title">域名<em>拦截</em></h1>
+        <p class="lead" x-text="$store.G.srcLabel"></p>
+      </header>
+
+      <!-- 主开关 -->
+      <div class="card">
+        <div class="head">
+          <div class="state">
+            <i class="dot"
+               :class="{on: $store.G.running, busy: $store.G.busy, fail: $store.G.failed}"></i>
+            <div>
+              <span class="t" x-text="$store.G.stateText()"></span>
+              <span class="s" x-text="$store.G.stateSub()"></span>
+            </div>
+          </div>
+          <div class="switch"
+               :class="{on: $store.G.running, busy: $store.G.busy}"
+               @click="$store.G.toggleProxy()"></div>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <strong x-text="$store.G.enabledCount()"></strong>
+            <em>当前规则</em>
+          </div>
+          <div class="stat">
+            <strong x-text="$store.G.stats.block"></strong>
+            <em>已拦截</em>
+          </div>
+        </div>
+
+        <div class="btns">
+          <button class="btn" @click="$store.G.reload()">↻ 重载规则</button>
+          <button class="btn" @click="$store.G.resetStats()">⌁ 重置统计</button>
+        </div>
+
+        <div class="tip" style="margin-top:16px">
+          ● <span x-text="$store.G.running
+            ? '防护已开启，网络请求正在被过滤。'
+            : '开启后，匹配规则的域名解析将被阻断。'"></span>
+        </div>
+      </div>
+
+      <!-- 日志 -->
+      <div class="section">
+        <b>实时活动</b>
+        <span x-text="$store.G.logCountText()"></span>
+      </div>
+      <div class="card capture">
+        <div class="capture-title">最近拦截</div>
+        <div class="empty" x-show="$store.G.logs.length===0">
+          开启防护后，这里会显示最近的网络活动
+        </div>
+        <template x-for="l in $store.G.visibleLogs()" :key="l.id">
+          <div class="logline" :class="l.t">
+            <span class="tm" x-text="l.time"></span>
+            <span class="tx" x-text="l.msg"></span>
+          </div>
+        </template>
+      </div>
+
+    </section>
+
+    <!-- ═══════════ 悬浮窗 ═══════════ -->
+    <section class="page" x-show="$store.G.tab==='float'">
+
+      <header class="top">
+        <div class="eyebrow">FLOATING BALL</div>
+        <h1 class="title">悬浮窗<em>控制</em></h1>
+        <p class="lead">开启后可在任意界面快速开关拦截</p>
+      </header>
+
+      <div class="card">
+        <div class="switchline" style="padding-top:0">
+          <div class="txt">
+            <b>启用悬浮窗</b>
+            <span>屏幕上出现可拖动的悬浮球</span>
+          </div>
+          <div class="small-switch"
+               :class="{on: $store.G.floatOn}"
+               @click="$store.G.toggleFloat()"><i></i></div>
+        </div>
+
+        <div class="switchline" style="padding-bottom:0">
+          <div class="txt">
+            <b>悬浮窗权限</b>
+            <span x-text="$store.G.overlayGranted ? '已授予' : '未授予，点击前往开启'"></span>
+          </div>
+          <div class="small-switch"
+               :class="{on: $store.G.overlayGranted}"
+               @click="$store.G.askOverlay()"><i></i></div>
+        </div>
+      </div>
+
+      <div class="section"><b>使用方式</b></div>
+      <div class="card">
+        <div class="step">
+          <div class="no">1</div>
+          <div class="tx">开启后，屏幕上出现一个圆形悬浮球，可拖到任意位置。</div>
+        </div>
+        <div class="step">
+          <div class="no">2</div>
+          <div class="tx">点一下悬浮球，展开成一个面板，里面只有一个按钮。</div>
+        </div>
+        <div class="step">
+          <div class="no">3</div>
+          <div class="tx">按钮显示「开启拦截」，点一下即开启；再点一下变「关闭拦截」，再点即关闭。与主页状态实时同步。</div>
+        </div>
+      </div>
+
+      <div class="info" style="margin-top:15px">
+        悬浮窗需要系统「显示在其他应用上层」权限。授权后返回本应用即可使用。
+      </div>
+
+    </section>
+
+    <!-- ═══════════ 关于 ═══════════ -->
+    <section class="page" x-show="$store.G.tab==='about'">
+
+      <header class="top">
+        <div class="eyebrow">ABOUT</div>
+        <h1 class="title">关于<em>频道</em></h1>
+        <p class="lead">Hosts Guard · 1.0.0</p>
+      </header>
+
+      <div class="channel" @click="$store.G.copyChannel()">
+        <div class="left">
+          <div class="ico">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M21.9 4.3 18.7 19.2c-.2 1.1-.9 1.3-1.8.8l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.3-5 9.1-8.2c.4-.4-.1-.6-.6-.2L6.2 12.7l-4.9-1.5c-1.1-.3-1.1-1 .2-1.5L20.6 3c.9-.3 1.6.2 1.3 1.3z"/>
+            </svg>
+          </div>
+          <div>
+            <div class="nm">@NeonEdgeX</div>
+            <div class="sub">Telegram 频道</div>
+          </div>
+        </div>
+        <div class="cp" x-text="$store.G.copied ? '已复制' : '复制'"></div>
+      </div>
+
+      <div class="info" style="margin-top:16px">
+        本地 DNS 过滤工具。规则内置于应用内，所有解析与拦截都在本机完成，不联网、不上传、不收集任何数据。
+      </div>
+
+    </section>
+
+  </div>
+</div>
+
+<!-- ═══════════ 底栏 ═══════════ -->
+<nav class="bottom" x-data x-cloak>
+  <div class="nav" :class="{active: $store.G.tab==='home'}" @click="$store.G.setTab('home')">
+    <div class="ico">
+      <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/><path d="M9.5 21v-6h5v6"/></svg>
+    </div>
+    主页
+  </div>
+  <div class="nav" :class="{active: $store.G.tab==='float'}" @click="$store.G.setTab('float')">
+    <div class="ico">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2"/><circle cx="12" cy="12" r="3"/></svg>
+    </div>
+    悬浮窗
+  </div>
+  <div class="nav" :class="{active: $store.G.tab==='about'}" @click="$store.G.setTab('about')">
+    <div class="ico">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v6"/><path d="M12 7.6v.05"/></svg>
+    </div>
+    关于
+  </div>
+</nav>
+
+</body>
+</html>
