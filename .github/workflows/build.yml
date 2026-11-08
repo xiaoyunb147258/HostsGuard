@@ -3,8 +3,6 @@ name: Build APK
 on:
   push:
     branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
@@ -21,34 +19,25 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: 8.7
+      # 用 runner 预装的 Gradle，不下载 distribution
+      # （services.gradle.org 最近频繁 504）
+      - name: Show Gradle version
+        run: gradle --version
 
       - name: Build Release APK
         run: gradle assembleRelease --no-daemon --stacktrace
 
       - name: Rename APK
+        if: success()
         run: |
           mkdir -p out
           find app/build/outputs/apk/release -name "*.apk" -exec cp {} out/HostsGuard.apk \;
           ls -la out/
 
       - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: HostsGuard-APK
           path: out/HostsGuard.apk
           retention-days: 30
-
-      - name: Upload mapping (if any)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-logs
-          path: |
-            app/build/outputs/logs/
-            app/build/outputs/mapping/
-          if-no-files-found: ignore
-          retention-days: 7
