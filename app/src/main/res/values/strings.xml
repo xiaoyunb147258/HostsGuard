@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Hosts Guard</string>
+    <string name="channel_name">防护状态</string>
+    <string name="channel_desc">显示域名拦截的运行状态</string>
+</resources>
